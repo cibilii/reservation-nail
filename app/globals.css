@@ -1,0 +1,479 @@
+@import "tailwindcss";
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/Vazirmatn[wght].woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* ==========================================
+   متغیرهای تم
+   ========================================== */
+:root {
+  /* Light mode - softer */
+  --bg-primary: #faf5ff;
+  --bg-secondary: #f3e8ff;
+  --text-primary: #4a1d96;
+  --text-secondary: #6b21a8;
+  --text-muted: #7e22ce;
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(168, 85, 247, 0.2);
+  --glass-shadow: 0 8px 32px rgba(168, 85, 247, 0.08);
+  --glass-shadow-hover: 0 16px 48px rgba(168, 85, 247, 0.15);
+  --primary: #8b5cf6;
+  --primary-hover: #7c3aed;
+  --gradient-start: #a78bfa;
+  --gradient-end: #7c3aed;
+}
+
+.dark {
+  --bg-primary: #0e001a;
+  --bg-secondary: #1a0a2e;
+  --text-primary: #e9d5ff;
+  --text-secondary: #d8b4fe;
+  --text-muted: #c084fc;
+  --glass-bg: rgba(30, 10, 60, 0.65);
+  --glass-border: rgba(168, 85, 247, 0.25);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --glass-shadow-hover: 0 16px 48px rgba(139, 92, 246, 0.3);
+  --primary: #a855f7;
+  --primary-hover: #9333ea;
+  --gradient-start: #8b5cf6;
+  --gradient-end: #6d28d9;
+}
+/* ==========================================
+   Base Styles
+   ========================================== */
+body {
+  font-family: 'Vazirmatn', 'Tahoma', sans-serif;
+  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+  color: var(--text-primary);
+  min-height: 100vh;
+  transition: background 0.5s, color 0.5s;
+}
+/* ==========================================
+   Glass Card
+   ========================================== */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 1.5rem;
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  box-shadow: var(--glass-shadow-hover);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+/* ==========================================
+   Button Primary
+   ========================================== */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  color: white;
+  font-weight: 700;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ==========================================
+   Text Gradient
+   ========================================== */
+.text-gradient {
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  background-image: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+}
+
+.text-gradient-animated {
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  background-image: linear-gradient(45deg, var(--gradient-start), var(--secondary), var(--accent), var(--gradient-start));
+  background-size: 300% 300%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* ==========================================
+   Input Floating
+   ========================================== */
+.input-floating {
+  position: relative;
+}
+
+.input-floating input,
+.input-floating select {
+  width: 100%;
+  padding: 1.5rem 1rem 0.5rem 1rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid var(--border-color);
+  border-radius: 0.75rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.input-floating input:focus {
+  border-color: var(--primary);
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.input-floating label {
+  position: absolute;
+  right: 1rem;
+  top: 1.25rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.input-floating input:focus ~ label,
+.input-floating input:not(:placeholder-shown) ~ label {
+  top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--primary);
+}
+
+/* ==========================================
+   Animations
+   ========================================== */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(139, 92, 246, 0.6); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease forwards;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ==========================================
+   Scrollbar
+   ========================================== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 9999px;
+}
+
+/* ==========================================
+   Selection
+   ========================================== */
+::selection {
+  background: var(--primary);
+  color: white;
+}
+
+/* ==========================================
+   Skeleton
+   ========================================== */
+.skeleton {
+  background: var(--glass-bg);
+  border-radius: 0.5rem;
+}
+
+/* ==========================================
+   Animation Delays
+   ========================================== */
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-400 { animation-delay: 400ms; }
+
+/* ==========================================
+   Stagger Children
+   ========================================== */
+.stagger-children > * {
+  opacity: 0;
+  animation: fade-in-up 0.5s ease forwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 400ms; }
+
+
+
+
+
+/* ==========================================
+   Ripple Effect for Buttons
+   ========================================== */
+.ripple-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(0);
+  animation: ripple-effect 0.6s ease-out;
+  pointer-events: none;
+}
+
+@keyframes ripple-effect {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ==========================================
+   Shimmer Loading Effect
+   ========================================== */
+@keyframes shimmer-effect {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-effect 1.5s infinite;
+}
+
+/* ==========================================
+   Card 3D Hover
+   ========================================== */
+.card-3d {
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.card-3d:hover {
+  transform: perspective(1000px) rotateX(2deg) rotateY(-5deg) translateY(-5px);
+}
+
+/* ==========================================
+   Floating Animation for Icons
+   ========================================== */
+@keyframes float-icon {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-8px) rotate(-5deg);
+  }
+  75% {
+    transform: translateY(-4px) rotate(5deg);
+  }
+}
+
+.float-icon {
+  animation: float-icon 4s ease-in-out infinite;
+}
+
+.float-icon-delay-1 {
+  animation-delay: 0.5s;
+}
+
+.float-icon-delay-2 {
+  animation-delay: 1s;
+}
+
+.float-icon-delay-3 {
+  animation-delay: 1.5s;
+}
+
+/* ==========================================
+   Glow Pulse for Selected Items
+   ========================================== */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.3),
+                0 0 20px rgba(168, 85, 247, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.5),
+                0 0 40px rgba(168, 85, 247, 0.2);
+  }
+}
+
+.glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* ==========================================
+   Slide In from Right
+   ========================================== */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-right {
+  animation: slide-in-right 0.5s ease forwards;
+}
+
+/* ==========================================
+   Scale In
+   ========================================== */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.scale-in {
+  animation: scale-in 0.4s ease forwards;
+}
+
+/* ==========================================
+   Bounce In
+   ========================================== */
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.bounce-in {
+  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+/* ==========================================
+   Text Reveal
+   ========================================== */
+@keyframes text-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.text-reveal {
+  animation: text-reveal 1s ease forwards;
+}
+
+/* ==========================================
+   Blur In
+   ========================================== */
+@keyframes blur-in {
+  from {
+    opacity: 0;
+    filter: blur(20px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.blur-in {
+  animation: blur-in 0.6s ease forwards;
+}
+/* مخفی کردن اسکرول‌بار در مرورگرهای مدرن */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari, Opera */
+}
