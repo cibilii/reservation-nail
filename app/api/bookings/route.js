@@ -1,163 +1,191 @@
 import { NextResponse } from "next/server";
 import { readData, writeData } from "@/lib/db";
 
-// app/api/bookings/route.js
 import {
   calculateEndTime,
   isSlotAvailable,
   toJalaliDisplay,
   isWorkingDay,
   isFutureDate,
-} from '@/lib/working-hours';
+} from "@/lib/working-hours";
 
-// GET: دریافت همه رزروها
+// -------------------------------
+// Safe default structure
+// -------------------------------
+function getSafeData(data) {
+  return {
+    bookings: Array.isArray(data?.bookings) ? data.bookings : [],
+    nextId: typeof data?.nextId === "number" ? data.nextId : 1,
+    settings: data?.settings || {
+      workingHours: { start: "09:00", end: "20:00" },
+      workingDays: [0, 1, 2, 3, 4, 6],
+      holidays: [],
+      slotDuration: 30,
+    },
+  };
+}
+
+// =====================================================
+// GET: all bookings
+// =====================================================
 export async function GET() {
   try {
-    const data = await readData();
+    const raw = await readData();
+    const data = getSafeData(raw);
 
-    // اضافه کردن تاریخ شمسی به هر رزرو
-    const bookingsWithJalali = data.bookings.map((booking) => ({
+    const result = data.bookings.map((booking) => ({
       ...booking,
       jalaliDate: toJalaliDisplay(booking.date),
     }));
 
-    // مرتب‌سازی بر اساس تاریخ ایجاد (جدیدترین اول)
-    bookingsWithJalali.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    result.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
 
-    return NextResponse.json(bookingsWithJalali);
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Error reading bookings:', error);
+    console.error("GET bookings error:", error);
+
     return NextResponse.json(
-      { error: 'خطا در خواندن رزروها.' },
+      { error: "خطا در خواندن رزروها" },
       { status: 500 }
     );
   }
 }
 
-// POST: ایجاد رزرو جدید
+// =====================================================
+// POST: create booking
+// =====================================================
 export async function POST(request) {
   try {
     const body = await request.json();
     const { name, phone, date, time, services } = body;
 
-    // ==========================================
-    // ۱. اعتبارسنجی کامل
-    // ==========================================
-
-    // چک کردن فیلدهای ضروری
-    if (!name || !phone || !date || !time || !services || services.length === 0) {
+    // -----------------------------
+    // Validation
+    // -----------------------------
+    if (
+      !name ||
+      !phone ||
+      !date ||
+      !time ||
+      !Array.isArray(services) ||
+      services.length === 0
+    ) {
       return NextResponse.json(
-        { error: 'لطفاً تمام فیلدهای ضروری را پر کنید.' },
+        { error: "لطفاً همه فیلدها را پر کنید" },
         { status: 400 }
       );
     }
 
-    // اعتبارسنجی نام
     if (name.trim().length < 2) {
       return NextResponse.json(
-        { error: 'نام باید حداقل ۲ کاراکتر باشد.' },
+        { error: "نام خیلی کوتاه است" },
         { status: 400 }
       );
     }
 
-    // اعتبارسنجی شماره موبایل
     if (!/^09\d{9}$/.test(phone)) {
       return NextResponse.json(
-        { error: 'شماره موبایل نامعتبر است. مثال: 09123456789' },
+        { error: "شماره موبایل نامعتبر است" },
         { status: 400 }
       );
     }
 
-    // اعتبارسنجی فرمت تاریخ
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(date)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return NextResponse.json(
-        { error: 'فرمت تاریخ باید YYYY-MM-DD باشد.' },
+        { error: "فرمت تاریخ اشتباه است" },
         { status: 400 }
       );
     }
 
-    // اعتبارسنجی فرمت زمان
-    const timeRegex = /^\d{2}:\d{2}$/;
-    if (!timeRegex.test(time)) {
+    if (!/^\d{2}:\d{2}$/.test(time)) {
       return NextResponse.json(
-        { error: 'فرمت زمان باید HH:mm باشد.' },
+        { error: "فرمت زمان اشتباه است" },
         { status: 400 }
       );
     }
 
-    // خواندن داده‌ها
-    const data = await readData();
+    // -----------------------------
+    // Load safe data
+    // -----------------------------
+    const raw = await readData();
+    const data = getSafeData(raw);
     const { settings } = data;
 
-    // چک کردن آینده بودن تاریخ
+    // -----------------------------
+    // Business rules
+    // -----------------------------
     if (!isFutureDate(date)) {
       return NextResponse.json(
-        { error: 'تاریخ انتخاب شده باید در آینده باشد.' },
+        { error: "تاریخ باید در آینده باشد" },
         { status: 400 }
       );
     }
 
-    // چک کردن روز کاری
     if (!isWorkingDay(date, settings)) {
       return NextResponse.json(
-        { error: 'سالن در تاریخ انتخاب شده تعطیل است.' },
+        { error: "این روز تعطیل است" },
         { status: 400 }
       );
     }
 
-    // ==========================================
-    // ۲. محاسبه مجموع مدت و قیمت
-    // ==========================================
-    const totalDuration = services.reduce((sum, s) => sum + (parseInt(s.duration) || 0), 0);
-    const totalPrice = services.reduce((sum, s) => sum + (parseInt(s.price) || 0), 0);
+    // -----------------------------
+    // Calculate price & duration
+    // -----------------------------
+    const totalDuration = services.reduce(
+      (sum, s) => sum + (parseInt(s.duration) || 0),
+      0
+    );
+
+    const totalPrice = services.reduce(
+      (sum, s) => sum + (parseInt(s.price) || 0),
+      0
+    );
 
     if (totalDuration <= 0) {
       return NextResponse.json(
-        { error: 'مدت زمان سرویس نامعتبر است.' },
+        { error: "مدت زمان نامعتبر است" },
         { status: 400 }
       );
     }
 
-    // محاسبه زمان پایان
     const endTime = calculateEndTime(time, totalDuration);
 
-    // چک کردن اینکه زمان پایان از ساعت کاری خارج نزند
     const endMin =
-      parseInt(endTime.split(':')[0]) * 60 + parseInt(endTime.split(':')[1]);
+      parseInt(endTime.split(":")[0]) * 60 +
+      parseInt(endTime.split(":")[1]);
+
     const workEndMin =
-      parseInt(settings.workingHours.end.split(':')[0]) * 60 +
-      parseInt(settings.workingHours.end.split(':')[1]);
+      parseInt(settings.workingHours.end.split(":")[0]) * 60 +
+      parseInt(settings.workingHours.end.split(":")[1]);
 
     if (endMin > workEndMin) {
       return NextResponse.json(
         {
-          error: `زمان پایان رزرو (${endTime}) خارج از ساعت کاری سالن (${settings.workingHours.end}) است.`,
+          error: `خارج از ساعت کاری (${settings.workingHours.end})`,
         },
         { status: 400 }
       );
     }
 
-    // ==========================================
-    // ۳. چک تداخل زمانی
-    // ==========================================
+    // -----------------------------
+    // Check overlap
+    // -----------------------------
     const dailyBookings = data.bookings.filter(
-      (b) => b.date === date && b.status !== 'cancelled'
+      (b) => b.date === date && b.status !== "cancelled"
     );
 
     if (!isSlotAvailable(time, totalDuration, dailyBookings)) {
       return NextResponse.json(
-        {
-          error:
-            'متأسفانه این اسلات زمانی در لحظه پر شد. لطفاً اسلات دیگری انتخاب کنید.',
-        },
-        { status: 409 } // Conflict
+        { error: "این تایم پر شده" },
+        { status: 409 }
       );
     }
 
-    // ==========================================
-    // ۴. ایجاد رزرو جدید
-    // ==========================================
+    // -----------------------------
+    // Create booking
+    // -----------------------------
     const newBooking = {
       id: data.nextId,
       name: name.trim(),
@@ -173,34 +201,30 @@ export async function POST(request) {
       })),
       totalDuration,
       totalPrice,
-      status: 'confirmed',
+      status: "confirmed",
       createdAt: new Date().toISOString(),
     };
 
-    // اضافه کردن به آرایه و افزایش nextId
     data.bookings.push(newBooking);
     data.nextId += 1;
 
-    // ذخیره‌سازی با قفل فایل (مدیریت خودکار هم‌زمانی)
     await writeData(data);
-
-    // برگرداندن پاسخ موفقیت با تاریخ شمسی
-    const bookingWithJalali = {
-      ...newBooking,
-      jalaliDate: toJalaliDisplay(date),
-    };
 
     return NextResponse.json(
       {
-        message: `رزرو با موفقیت انجام شد. ${toJalaliDisplay(date)} ساعت ${time} منتظر شما هستیم.`,
-        booking: bookingWithJalali,
+        message: `رزرو موفق - ${toJalaliDisplay(date)} ساعت ${time}`,
+        booking: {
+          ...newBooking,
+          jalaliDate: toJalaliDisplay(date),
+        },
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error('Booking error:', error);
+    console.error("POST booking error:", error);
+
     return NextResponse.json(
-      { error: 'خطا در ثبت رزرو. لطفاً دوباره تلاش کنید.' },
+      { error: "خطای سرور در ثبت رزرو" },
       { status: 500 }
     );
   }
